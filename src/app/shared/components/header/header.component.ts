@@ -14,8 +14,9 @@ import { Router, RouterModule } from '@angular/router';
   template: `
     <header class="sticky top-0 z-50 bg-white/90 backdrop-blur-md shadow-sm border-b border-pink-50 h-[72px] flex items-center justify-between px-4 lg:px-8 transition-all duration-300">
       <div class="flex items-center gap-4">
-        <a routerLink="/" class="text-3xl font-bold text-palo-rosa font-serif tracking-tight hover:opacity-90 transition-opacity">
-          Nena's Store
+        <a routerLink="/" class="flex items-center gap-3 group text-3xl font-bold text-palo-rosa font-serif tracking-tight hover:opacity-90 transition-opacity">
+          <img src="logo.jpeg" alt="Nenas Store" class="h-12 w-12 rounded-full object-cover shadow-sm border-2 border-white group-hover:border-pink-50 transition-colors">
+          <span>Nena's Store</span>
         </a>
       </div>
       

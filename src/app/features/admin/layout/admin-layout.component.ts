@@ -12,7 +12,10 @@ import { AuthService } from '../../../core/services/auth.service';
       
       <!-- Mobile Top Bar -->
       <div class="md:hidden fixed w-full bg-white z-20 border-b border-gray-200 px-4 py-3 flex justify-between items-center shadow-sm">
-          <span class="font-bold text-palo-rosa text-lg font-serif">Nena's Admin</span>
+          <div class="flex items-center gap-2">
+            <img src="logo.jpeg" alt="Logo" class="h-8 w-8 rounded-full object-cover">
+            <span class="font-bold text-palo-rosa text-lg font-serif">Nena's Admin</span>
+          </div>
           <button (click)="toggleSidebar()" class="text-gray-600 focus:outline-none">
               <i class="pi pi-bars text-2xl"></i>
           </button>
@@ -23,8 +26,9 @@ import { AuthService } from '../../../core/services/auth.service';
 
       <!-- Sidebar -->
       <aside [class.translate-x-0]="isSidebarOpen()" [class.-translate-x-full]="!isSidebarOpen()" class="fixed inset-y-0 left-0 w-64 bg-white border-r border-gray-200 flex flex-col z-40 transition-transform duration-300 transform md:translate-x-0 md:static md:inset-auto">
-        <div class="p-6 border-b border-gray-100 flex items-center justify-center h-16 md:h-20">
-            <h2 class="text-2xl font-bold text-palo-rosa font-serif">Nena's Admin</h2>
+        <div class="p-6 border-b border-gray-100 flex items-center justify-center h-16 md:h-20 gap-3">
+            <img src="logo.jpeg" alt="Logo" class="h-10 w-10 rounded-full object-cover shadow-sm">
+            <h2 class="text-xl font-bold text-palo-rosa font-serif">Nena's Admin</h2>
         </div>
 
         <nav class="flex-1 p-4 space-y-2 overflow-y-auto">
