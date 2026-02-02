@@ -1,6 +1,7 @@
-import { Component } from '@angular/core';
+import { Component, inject, OnInit, signal } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { CardModule } from 'primeng/card';
+import { AnalyticsService } from '../../../core/services/analytics.service';
 
 @Component({
     selector: 'app-dashboard-home',
@@ -23,11 +24,12 @@ import { CardModule } from 'primeng/card';
 
             <div class="bg-white p-6 rounded-2xl shadow-sm border border-gray-100 flex items-center gap-4">
                 <div class="w-12 h-12 bg-green-50 text-green-500 rounded-full flex items-center justify-center">
-                    <i class="pi pi-dollar text-xl"></i>
+                    <i class="pi pi-cursor text-xl"></i>
                 </div>
                 <div>
-                    <h3 class="text-gray-500 text-sm font-medium">Ventas Hoy</h3>
-                    <p class="text-2xl font-bold text-gray-800">S/. 0.00</p>
+                    <h3 class="text-gray-500 text-sm font-medium">Clicks en compras</h3>
+                    <p class="text-2xl font-bold text-gray-800">{{ clicksCount() }}</p>
+                    <p class="text-xs text-gray-400 mt-1">Hoy</p>
                 </div>
             </div>
 
@@ -50,4 +52,14 @@ import { CardModule } from 'primeng/card';
     </div>
   `
 })
-export class DashboardHomeComponent { }
+export class DashboardHomeComponent implements OnInit {
+    private analyticsService = inject(AnalyticsService);
+
+    clicksCount = signal(0);
+
+    ngOnInit() {
+        this.analyticsService.getTodayClicksCount().subscribe(count => {
+            this.clicksCount.set(count);
+        });
+    }
+}

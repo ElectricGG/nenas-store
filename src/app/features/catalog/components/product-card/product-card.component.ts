@@ -1,7 +1,9 @@
-import { Component, Input, inject, OnInit, ElementRef, ViewChild, OnChanges, SimpleChanges } from '@angular/core';
+
+import { Component, Input, inject, OnInit, ElementRef, ViewChild } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { Product } from '../../../../core/services/product.service';
 import { CartService } from '../../../../core/services/cart.service';
+import { AnalyticsService } from '../../../../core/services/analytics.service';
 import { ButtonModule } from 'primeng/button';
 import { FormsModule } from '@angular/forms';
 import { CartAnimationService } from '../../../../core/services/cart-animation.service';
@@ -83,6 +85,7 @@ export class ProductCardComponent implements OnInit {
 
     cartService = inject(CartService);
     cartAnimationService = inject(CartAnimationService);
+    analyticsService = inject(AnalyticsService);
 
     selectedSize: string = '';
     selectedColor: string = '';
@@ -149,6 +152,9 @@ export class ProductCardComponent implements OnInit {
 
     buyNow() {
         if (!this.hasStock) return;
+
+        this.analyticsService.logPurchaseClick(this.product, this.selectedSize, this.selectedColor);
+
         this.cartService.checkoutSingleItem(this.product, this.selectedSize, this.selectedColor);
     }
 }
