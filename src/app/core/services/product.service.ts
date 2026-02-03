@@ -110,7 +110,11 @@ export class ProductService {
         if (prodError) throw prodError;
 
         // 3. Insert Variants
-        const variantsWithProductId = variants.map(v => ({ ...v, product_id: product.id }));
+        const variantsWithProductId = variants.map(v => ({
+            ...v,
+            product_id: product.id,
+            size: v.size.toUpperCase()
+        }));
         const { error: varError } = await this.supabase
             .from('product_variants')
             .insert(variantsWithProductId);
@@ -141,7 +145,11 @@ export class ProductService {
 
         if (delError) throw delError;
 
-        const variantsWithProductId = variants.map(v => ({ ...v, product_id: id }));
+        const variantsWithProductId = variants.map(v => ({
+            ...v,
+            product_id: id,
+            size: v.size.toUpperCase()
+        }));
         const { error: varError } = await this.supabase
             .from('product_variants')
             .insert(variantsWithProductId);
