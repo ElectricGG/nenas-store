@@ -50,8 +50,8 @@ import { CheckboxModule } from 'primeng/checkbox';
                         </div>
                     </div>
 
-                    <!-- Colors -->
-                    <div class="mb-6">
+                    <!-- Colors (Hidden by request) -->
+                    <!-- <div class="mb-6">
                          <h4 class="font-semibold mb-3 text-xs text-gray-400 uppercase tracking-widest">Color</h4>
                          <div class="flex flex-wrap gap-3">
                             <div *ngFor="let color of allColors()" 
@@ -65,7 +65,7 @@ import { CheckboxModule } from 'primeng/checkbox';
                                  <i *ngIf="selectedColors.includes(color)" class="pi pi-check absolute top-1/2 left-1/2 transform -translate-x-1/2 -translate-y-1/2 text-[10px]" [class.text-white]="color !== 'Blanco'" [class.text-black]="color === 'Blanco'"></i>
                             </div>
                          </div>
-                    </div>
+                    </div> -->
                 </div>
             </div>
             </aside>

@@ -7,7 +7,8 @@ export interface Product {
     id: string; // Changed to string for UUID
     name: string;
     price: number;
-    image: string;
+    image: string; // Primary image (backwards compatibility)
+    images: string[]; // All images
     category: string;
     sizes: string[];
     colors: string[];
@@ -23,6 +24,7 @@ export interface ProductInput {
     price: number;
     category_id: number;
     image_url: string;
+    images?: string[];
 }
 
 export interface ProductVariantInput {
@@ -54,6 +56,7 @@ export class ProductService {
                 description,
                 price,
                 image_url,
+                images,
                 category:categories(name),
                 product_variants(size, color, stock)
             `)
@@ -95,10 +98,20 @@ export class ProductService {
 
     // --- WRITE ---
 
-    async createProduct(productData: ProductInput, variants: ProductVariantInput[], imageFile: File): Promise<void> {
-        // 1. Upload Image
-        const imageUrl = await this.uploadImage(imageFile);
-        productData.image_url = imageUrl;
+    async createProduct(productData: ProductInput, variants: ProductVariantInput[], imageFiles: File[]): Promise<void> {
+        // 1. Upload Images
+        const imageUrls: string[] = [];
+        if (imageFiles.length > 0) {
+            for (const file of imageFiles) {
+                const url = await this.uploadImage(file);
+                imageUrls.push(url);
+            }
+        }
+
+        productData.images = imageUrls;
+        if (imageUrls.length > 0) {
+            productData.image_url = imageUrls[0]; // Set primary image
+        }
 
         // 2. Insert Product
         const { data: product, error: prodError } = await this.supabase
@@ -122,11 +135,22 @@ export class ProductService {
         if (varError) throw varError;
     }
 
-    async updateProduct(id: string, productData: ProductInput, variants: ProductVariantInput[], imageFile?: File): Promise<void> {
-        // 1. Upload new image if exists
-        if (imageFile) {
-            const imageUrl = await this.uploadImage(imageFile);
-            productData.image_url = imageUrl;
+    async updateProduct(id: string, productData: ProductInput, variants: ProductVariantInput[], newImageFiles: File[], existingImages: string[] = []): Promise<void> {
+        // 1. Upload new images
+        const newImageUrls: string[] = [];
+        if (newImageFiles.length > 0) {
+            for (const file of newImageFiles) {
+                const url = await this.uploadImage(file);
+                newImageUrls.push(url);
+            }
+        }
+
+        // Combine existing and new images
+        const allImages = [...existingImages, ...newImageUrls];
+        productData.images = allImages;
+
+        if (allImages.length > 0) {
+            productData.image_url = allImages[0];
         }
 
         // 2. Update Product
@@ -171,7 +195,7 @@ export class ProductService {
 
     private async uploadImage(file: File): Promise<string> {
         const fileExt = file.name.split('.').pop();
-        const fileName = `${Date.now()}.${fileExt}`;
+        const fileName = `${Date.now()}-${Math.random().toString(36).substring(2)}.${fileExt}`; // More unique name
         const filePath = `${fileName}`;
 
         const { error: uploadError } = await this.supabase.storage
@@ -185,11 +209,15 @@ export class ProductService {
     }
 
     private mapRowToProduct(row: any): Product {
+        // Ensure images array exists, fallback to single image_url if null
+        const images = row.images && row.images.length > 0 ? row.images : (row.image_url ? [row.image_url] : []);
+
         return {
             id: row.id,
             name: row.name,
             price: row.price,
-            image: row.image_url,
+            image: row.image_url || (images.length > 0 ? images[0] : ''),
+            images: images,
             category: row.category?.name || 'Uncategorized',
             sizes: [...new Set(row.product_variants?.map((v: any) => v.size) || [])] as string[],
             colors: [...new Set(row.product_variants?.map((v: any) => v.color) || [])] as string[],

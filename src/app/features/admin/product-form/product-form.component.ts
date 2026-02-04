@@ -63,12 +63,29 @@ import { TableModule } from 'primeng/table';
 
             <!-- Image Upload -->
              <div class="space-y-2">
-              <label class="font-medium text-gray-700">Imagen Principal</label>
-              <input type="file" (change)="onFileSelected($event)" accept="image/*" class="w-full text-sm text-gray-500 file:mr-4 file:py-2 file:px-4 file:rounded-full file:border-0 file:text-sm file:font-semibold file:bg-pink-50 file:text-palo-rosa hover:file:bg-pink-100"/>
+              <label class="font-medium text-gray-700">Imágenes del Producto</label>
+              <input type="file" (change)="onFileSelected($event)" accept="image/*" multiple class="w-full text-sm text-gray-500 file:mr-4 file:py-2 file:px-4 file:rounded-full file:border-0 file:text-sm file:font-semibold file:bg-pink-50 file:text-palo-rosa hover:file:bg-pink-100"/>
               
-              <!-- Preview -->
-              <div *ngIf="imagePreview" class="mt-4">
-                  <img [src]="imagePreview" class="h-32 w-32 object-cover rounded-lg border border-gray-200 shadow-sm" />
+              <!-- Previews -->
+              <div class="mt-4 grid grid-cols-2 md:grid-cols-4 gap-4">
+                  <!-- Existing Images -->
+                  <div *ngFor="let img of existingImages; let i = index" class="relative group">
+                      <img [src]="img" class="h-32 w-full object-cover rounded-lg border border-gray-200 shadow-sm" />
+                      <button type="button" (click)="removeExistingImage(i)" class="absolute top-1 right-1 bg-white rounded-full p-1 shadow-md text-red-500 hover:text-red-700 cursor-pointer">
+                        <i class="pi pi-times text-xs"></i>
+                      </button>
+                  </div>
+
+                  <!-- New Image Previews -->
+                  <div *ngFor="let preview of imagePreviews; let i = index" class="relative group">
+                      <img [src]="preview" class="h-32 w-full object-cover rounded-lg border border-gray-200 shadow-sm opacity-90" />
+                      <div class="absolute inset-0 flex items-center justify-center bg-black/10 opacity-0 group-hover:opacity-100 transition-opacity rounded-lg">
+                          <span class="bg-white text-xs px-2 py-1 rounded-full shadow font-bold text-gray-600">Nuevo</span>
+                      </div>
+                      <button type="button" (click)="removeNewImage(i)" class="absolute top-1 right-1 bg-white rounded-full p-1 shadow-md text-red-500 hover:text-red-700 cursor-pointer">
+                        <i class="pi pi-times text-xs"></i>
+                      </button>
+                  </div>
               </div>
             </div>
           </div>
@@ -139,8 +156,9 @@ export class ProductFormComponent implements OnInit {
     isEditMode = false;
     productId: string | null = null;
 
-    selectedFile: File | null = null;
-    imagePreview: string | null = null;
+    selectedFiles: File[] = [];
+    imagePreviews: string[] = [];
+    existingImages: string[] = [];
 
     ngOnInit() {
         this.initForm();
@@ -202,7 +220,14 @@ export class ProductFormComponent implements OnInit {
                     category_id: data.category_id
                 });
 
-                this.imagePreview = data.image_url;
+                // Load existing images (prioritize array)
+                if (data.images && data.images.length > 0) {
+                    this.existingImages = data.images;
+                } else if (data.image_url) {
+                    this.existingImages = [data.image_url];
+                } else {
+                    this.existingImages = [];
+                }
 
                 // Clear default variants
                 this.variants.clear();
@@ -228,17 +253,30 @@ export class ProductFormComponent implements OnInit {
     }
 
     onFileSelected(event: any) {
-        const file = event.target.files[0];
-        if (file) {
-            this.selectedFile = file;
+        const files: FileList = event.target.files;
+        if (files && files.length > 0) {
+            // Convert FileList to Array and Append
+            const newFiles = Array.from(files);
+            this.selectedFiles = [...this.selectedFiles, ...newFiles];
 
-            // Preview
-            const reader = new FileReader();
-            reader.onload = () => {
-                this.imagePreview = reader.result as string;
-            };
-            reader.readAsDataURL(file);
+            // Generate Previews for new files
+            newFiles.forEach(file => {
+                const reader = new FileReader();
+                reader.onload = (e: any) => {
+                    this.imagePreviews.push(e.target.result);
+                };
+                reader.readAsDataURL(file);
+            });
         }
+    }
+
+    removeNewImage(index: number) {
+        this.selectedFiles.splice(index, 1);
+        this.imagePreviews.splice(index, 1);
+    }
+
+    removeExistingImage(index: number) {
+        this.existingImages.splice(index, 1);
     }
 
     async onSubmit() {
@@ -247,8 +285,8 @@ export class ProductFormComponent implements OnInit {
             return;
         }
 
-        if (!this.selectedFile && !this.isEditMode) {
-            this.messageService.add({ severity: 'warn', summary: 'Imagen requerida', detail: 'Debe subir una imagen para el producto.' });
+        if (this.selectedFiles.length === 0 && this.existingImages.length === 0) {
+            this.messageService.add({ severity: 'warn', summary: 'Imagen requerida', detail: 'Debe subir al menos una imagen para el producto.' });
             return;
         }
 
@@ -261,7 +299,7 @@ export class ProductFormComponent implements OnInit {
             description: formValue.description,
             price: formValue.price,
             category_id: formValue.category_id,
-            image_url: this.imagePreview || '' // Will be overwritten if file selected
+            image_url: '' // Will be handled by service
         };
 
         // Extract Variants
@@ -269,10 +307,10 @@ export class ProductFormComponent implements OnInit {
 
         try {
             if (this.isEditMode && this.productId) {
-                await this.productService.updateProduct(this.productId, productData, variantsData, this.selectedFile || undefined);
+                await this.productService.updateProduct(this.productId, productData, variantsData, this.selectedFiles, this.existingImages);
                 this.messageService.add({ severity: 'success', summary: 'Actualizado', detail: 'Producto actualizado correctamente' });
             } else {
-                await this.productService.createProduct(productData, variantsData, this.selectedFile!);
+                await this.productService.createProduct(productData, variantsData, this.selectedFiles);
                 this.messageService.add({ severity: 'success', summary: 'Creado', detail: 'Producto creado correctamente' });
             }
 
