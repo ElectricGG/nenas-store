@@ -5,17 +5,18 @@ import { Product } from '../../../../core/services/product.service';
 import { CartService } from '../../../../core/services/cart.service';
 import { AnalyticsService } from '../../../../core/services/analytics.service';
 import { ButtonModule } from 'primeng/button';
+import { DialogModule } from 'primeng/dialog';
 import { FormsModule } from '@angular/forms';
 import { CartAnimationService } from '../../../../core/services/cart-animation.service';
 
 @Component({
     selector: 'app-product-card',
     standalone: true,
-    imports: [CommonModule, ButtonModule, FormsModule],
+    imports: [CommonModule, ButtonModule, DialogModule, FormsModule],
     template: `
     <div class="bg-white rounded-xl p-3 shadow-sm hover:shadow-xl transition-all duration-300 group border border-transparent hover:border-pink-100 flex flex-col h-full relative overflow-hidden">
       <!-- Image -->
-      <div class="relative aspect-[3/4] rounded-lg overflow-hidden mb-3 bg-gray-50">
+      <div class="relative aspect-[3/4] rounded-lg overflow-hidden mb-3 bg-gray-50 cursor-pointer" (click)="showPreview()">
         <img #productImage [src]="product.image" class="w-full h-full object-cover transform group-hover:scale-105 transition-transform duration-700" alt="{{product.name}}" loading="lazy">
         <div class="absolute inset-0 bg-black/5 opacity-0 group-hover:opacity-100 transition-opacity"></div>
         
@@ -77,6 +78,22 @@ import { CartAnimationService } from '../../../../core/services/cart-animation.s
         </div>
       </div>
     </div>
+
+    <!-- Image Preview Modal -->
+    <p-dialog [(visible)]="displayPreview" [modal]="true" [dismissableMask]="true" [showHeader]="false" styleClass="!bg-transparent !shadow-none" [style]="{width: 'auto', maxWidth: '95vw', maxHeight: '95vh'}" [contentStyle]="{'padding': '0', 'background': 'transparent', 'overflow': 'visible'}" (onHide)="displayPreview = false">
+        <div class="relative group flex items-center justify-center overflow-hidden rounded-lg shadow-2xl bg-white" (mousemove)="onMouseMove($event)" (touchmove)="onTouchMove($event)" (click)="toggleZoom($event)">
+            <button (click)="$event.stopPropagation(); displayPreview = false" class="absolute top-4 right-4 z-50 bg-white/90 text-gray-800 rounded-full w-10 h-10 flex items-center justify-center shadow-lg hover:bg-white transition-colors cursor-pointer focus:outline-none backdrop-blur-sm">
+                <i class="pi pi-times text-lg"></i>
+            </button>
+            <img [src]="product.image" 
+                 class="max-w-[90vw] max-h-[85vh] object-contain transition-transform duration-200 ease-out will-change-transform" 
+                 [class.cursor-zoom-in]="!isZoomed"
+                 [class.cursor-zoom-out]="isZoomed"
+                 [style.transform]="isZoomed ? 'scale(2.5)' : 'scale(1)'"
+                 [style.transform-origin]="zoomOrigin"
+                 alt="{{product.name}}">
+        </div>
+    </p-dialog>
   `
 })
 export class ProductCardComponent implements OnInit {
@@ -92,6 +109,9 @@ export class ProductCardComponent implements OnInit {
 
     availableColors: string[] = [];
     isAdding = false;
+    displayPreview = false;
+    isZoomed = false;
+    zoomOrigin = '50% 50%';
 
     get hasStock(): boolean {
         // If product has no variants (e.g. unique item?), assume in stock or check global stock prop if added later
@@ -156,5 +176,52 @@ export class ProductCardComponent implements OnInit {
         this.analyticsService.logPurchaseClick(this.product, this.selectedSize, this.selectedColor);
 
         this.cartService.checkoutSingleItem(this.product, this.selectedSize, this.selectedColor);
+    }
+
+    showPreview() {
+        this.displayPreview = true;
+        this.isZoomed = false; // Reset zoom on open
+    }
+
+    toggleZoom(event: MouseEvent) {
+        event.stopPropagation();
+        this.isZoomed = !this.isZoomed;
+        if (this.isZoomed) {
+            this.updateZoomOrigin(event);
+        }
+    }
+
+    onMouseMove(event: MouseEvent) {
+        if (this.isZoomed) {
+            this.updateZoomOrigin(event);
+        }
+    }
+
+    onTouchMove(event: TouchEvent) {
+        if (this.isZoomed) {
+            // Prevent scrolling on mobile while zooming
+            // Note: Simplistic prevention. 
+            this.updateZoomOrigin(event);
+        }
+    }
+
+    private updateZoomOrigin(event: MouseEvent | TouchEvent) {
+        const element = event.currentTarget as HTMLElement;
+        const rect = element.getBoundingClientRect();
+
+        let clientX, clientY;
+
+        if (window.TouchEvent && event instanceof TouchEvent) {
+            clientX = event.touches[0].clientX;
+            clientY = event.touches[0].clientY;
+        } else {
+            const mouseEvent = event as MouseEvent;
+            clientX = mouseEvent.clientX;
+            clientY = mouseEvent.clientY;
+        }
+
+        const x = ((clientX - rect.left) / rect.width) * 100;
+        const y = ((clientY - rect.top) / rect.height) * 100;
+        this.zoomOrigin = `${x}% ${y}%`;
     }
 }
