@@ -10,7 +10,7 @@ export class AnalyticsService {
     private supabase = inject(SupabaseService).client;
 
     // Fire and forget - void return
-    async logPurchaseClick(product: Product, size: string, color: string): Promise<void> {
+    async logPurchaseClick(product: Product, color: string): Promise<void> {
         try {
             // No await here to ensure UI is not blocked? 
             // Actually, async function without await on call site is fine.
@@ -22,7 +22,7 @@ export class AnalyticsService {
                     product_id: product.id,
                     product_name: product.name,
                     price: product.price,
-                    selected_size: size,
+                    selected_size: null,
                     selected_color: color,
                     metadata: {
                         category: product.category,

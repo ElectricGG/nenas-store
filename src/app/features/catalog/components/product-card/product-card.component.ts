@@ -49,30 +49,16 @@ import { CartAnimationService } from '../../../../core/services/cart-animation.s
         
         <div class="mt-auto space-y-3">
              <!-- Selections -->
-             <div class="grid grid-cols-2 gap-2" *ngIf="product.sizes.length > 0">
-                 <div>
-                    <label class="text-[9px] uppercase font-bold text-gray-400 block mb-0.5 tracking-wider">Talla</label>
-                    <div class="relative">
-                        <select [(ngModel)]="selectedSize" (ngModelChange)="onSizeChange()" class="w-full appearance-none bg-gray-50 border border-gray-200 text-gray-700 py-1 px-2 pr-6 rounded-md leading-tight focus:outline-none focus:bg-white focus:border-palo-rosa text-[11px] transition-colors cursor-pointer h-7">
-                            <option *ngFor="let s of product.sizes" [value]="s">{{s}}</option>
-                        </select>
-                        <div class="pointer-events-none absolute inset-y-0 right-0 flex items-center px-1 text-gray-500">
-                            <i class="pi pi-chevron-down text-[8px]"></i>
-                        </div>
+             <div *ngIf="availableColors.length > 0">
+                <label class="text-[9px] uppercase font-bold text-gray-400 block mb-0.5 tracking-wider">Color</label>
+                <div class="relative">
+                    <select [(ngModel)]="selectedColor" class="w-full appearance-none bg-gray-50 border border-gray-200 text-gray-700 py-1 px-2 pr-6 rounded-md leading-tight focus:outline-none focus:bg-white focus:border-palo-rosa text-[11px] transition-colors cursor-pointer h-7">
+                         <option *ngFor="let c of availableColors" [value]="c">{{c}}</option>
+                    </select>
+                    <div class="pointer-events-none absolute inset-y-0 right-0 flex items-center px-1 text-gray-500">
+                        <i class="pi pi-chevron-down text-[8px]"></i>
                     </div>
-                 </div>
-                 <div>
-                    <label class="text-[9px] uppercase font-bold text-gray-400 block mb-0.5 tracking-wider">Color</label>
-                    <div class="relative">
-                        <select [(ngModel)]="selectedColor" [disabled]="availableColors.length === 0" class="w-full appearance-none bg-gray-50 border border-gray-200 text-gray-700 py-1 px-2 pr-6 rounded-md leading-tight focus:outline-none focus:bg-white focus:border-palo-rosa text-[11px] transition-colors cursor-pointer h-7 disabled:opacity-50 disabled:cursor-not-allowed">
-                             <option *ngFor="let c of availableColors" [value]="c">{{c}}</option>
-                             <option *ngIf="availableColors.length === 0" value="">N/A</option>
-                        </select>
-                        <div class="pointer-events-none absolute inset-y-0 right-0 flex items-center px-1 text-gray-500">
-                            <i class="pi pi-chevron-down text-[8px]"></i>
-                        </div>
-                    </div>
-                 </div>
+                </div>
              </div>
       
              <div class="flex gap-2">
@@ -128,7 +114,6 @@ export class ProductCardComponent implements OnInit {
     cartAnimationService = inject(CartAnimationService);
     analyticsService = inject(AnalyticsService);
 
-    selectedSize: string = '';
     selectedColor: string = '';
 
     availableColors: string[] = [];
@@ -149,20 +134,18 @@ export class ProductCardComponent implements OnInit {
         // If product has no variants (e.g. unique item?), assume in stock or check global stock prop if added later
         if (!this.product.product_variants || this.product.product_variants.length === 0) return true;
 
-        const variant = this.product.product_variants.find(v =>
-            v.size === this.selectedSize && v.color === this.selectedColor
+        // Product without colors: it's enough that any variant has stock
+        if (this.availableColors.length === 0) {
+            return this.product.product_variants.some(v => v.stock > 0);
+        }
+
+        // Stock is per color: available if any variant of that color still has stock
+        return this.product.product_variants.some(v =>
+            v.color === this.selectedColor && v.stock > 0
         );
-        return variant ? variant.stock > 0 : false;
     }
 
     ngOnInit() {
-        if (this.product.sizes.length > 0) {
-            this.selectedSize = this.product.sizes[0];
-            this.updateAvailableColors();
-        }
-    }
-
-    onSizeChange() {
         this.updateAvailableColors();
     }
 
@@ -172,9 +155,8 @@ export class ProductCardComponent implements OnInit {
             return;
         }
 
-        // Get unique colors for the selected size
-        const variantsForSize = this.product.product_variants.filter(v => v.size === this.selectedSize);
-        this.availableColors = [...new Set(variantsForSize.map(v => v.color))];
+        // Get unique colors across all variants (color is optional, so drop the empty ones)
+        this.availableColors = [...new Set(this.product.product_variants.map(v => v.color).filter(Boolean))];
 
         // Auto-select first color, or clear if none
         if (this.availableColors.length > 0) {
@@ -194,7 +176,7 @@ export class ProductCardComponent implements OnInit {
             this.cartAnimationService.animateFlyToCart(this.productImage.nativeElement, this.product.image);
         }
 
-        this.cartService.addToCart(this.product, this.selectedSize, this.selectedColor);
+        this.cartService.addToCart(this.product, this.selectedColor);
 
         this.isAdding = true;
         setTimeout(() => {
@@ -205,9 +187,9 @@ export class ProductCardComponent implements OnInit {
     buyNow() {
         if (!this.hasStock) return;
 
-        this.analyticsService.logPurchaseClick(this.product, this.selectedSize, this.selectedColor);
+        this.analyticsService.logPurchaseClick(this.product, this.selectedColor);
 
-        this.cartService.checkoutSingleItem(this.product, this.selectedSize, this.selectedColor);
+        this.cartService.checkoutSingleItem(this.product, this.selectedColor);
     }
 
     showPreview() {

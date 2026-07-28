@@ -43,7 +43,7 @@ import { ToastModule } from 'primeng/toast';
                             <th>Nombre</th>
                             <th>Categoría</th>
                             <th>Precio</th>
-                            <th>Tallas</th>
+                            <th>Variantes</th>
                             <th class="text-center">Acciones</th>
                         </tr>
                     </ng-template>
@@ -60,7 +60,8 @@ import { ToastModule } from 'primeng/toast';
                             <td>
                                 <div class="flex flex-wrap gap-1">
                                     <span *ngFor="let size of product.sizes" class="bg-pink-50 text-pink-600 px-2 py-1 rounded-md text-xs font-semibold">{{ size }}</span>
-                                    <span *ngIf="product.sizes.length === 0" class="text-gray-400 text-xs italic">Sin variantes</span>
+                                    <span *ngFor="let color of product.colors" class="bg-gray-50 text-gray-600 px-2 py-1 rounded-md text-xs font-semibold">{{ color }}</span>
+                                    <span *ngIf="product.sizes.length === 0 && product.colors.length === 0" class="text-gray-400 text-xs italic">Sin talla ni color</span>
                                 </div>
                             </td>
                             <td class="text-center">

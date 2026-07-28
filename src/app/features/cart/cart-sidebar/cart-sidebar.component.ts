@@ -24,7 +24,7 @@ import { ImageModule } from 'primeng/image';
                 <div class="flex-1 min-w-0 flex flex-col justify-between">
                     <div>
                         <h4 class="font-semibold text-gray-800 text-sm leading-tight line-clamp-2">{{item.product.name}}</h4>
-                        <p class="text-xs text-gray-500 mt-1">Color: {{item.selectedColor}} • Talla: {{item.selectedSize}}</p>
+                        <p class="text-xs text-gray-500 mt-1" *ngIf="item.selectedColor">Color: {{item.selectedColor}}</p>
                     </div>
                     <div class="flex items-center justify-between mt-2">
                         <span class="font-bold text-palo-rosa">S/. {{(item.product.price * item.quantity) | number:'1.2-2'}}</span>

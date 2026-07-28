@@ -114,7 +114,7 @@ export class CatalogComponent {
     priceRange: number[] = [0, 300];
     selectedColors: string[] = [];
 
-    showFiltersMobile = false;
+    showFiltersMobile = true;
 
     // Computed helpers for available options
     categories = computed(() => [...new Set(this.products().map(p => p.category))]);

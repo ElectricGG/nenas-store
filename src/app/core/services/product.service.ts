@@ -28,8 +28,8 @@ export interface ProductInput {
 }
 
 export interface ProductVariantInput {
-    size: string;
-    color: string;
+    size?: string | null;
+    color?: string | null;
     stock: number;
     additional_price?: number;
 }
@@ -126,7 +126,8 @@ export class ProductService {
         const variantsWithProductId = variants.map(v => ({
             ...v,
             product_id: product.id,
-            size: v.size.toUpperCase()
+            size: this.normalizeSize(v.size),
+            color: this.normalizeColor(v.color)
         }));
         const { error: varError } = await this.supabase
             .from('product_variants')
@@ -172,7 +173,8 @@ export class ProductService {
         const variantsWithProductId = variants.map(v => ({
             ...v,
             product_id: id,
-            size: v.size.toUpperCase()
+            size: this.normalizeSize(v.size),
+            color: this.normalizeColor(v.color)
         }));
         const { error: varError } = await this.supabase
             .from('product_variants')
@@ -192,6 +194,17 @@ export class ProductService {
     }
 
     // --- HELPERS ---
+
+    // Talla y color son opcionales: si vienen vacíos se guardan como null, no como ''
+    private normalizeSize(size?: string | null): string | null {
+        const clean = (size || '').trim();
+        return clean ? clean.toUpperCase() : null;
+    }
+
+    private normalizeColor(color?: string | null): string | null {
+        const clean = (color || '').trim();
+        return clean ? clean : null;
+    }
 
     private async uploadImage(file: File): Promise<string> {
         const fileExt = file.name.split('.').pop();
@@ -219,8 +232,9 @@ export class ProductService {
             image: row.image_url || (images.length > 0 ? images[0] : ''),
             images: images,
             category: row.category?.name || 'Uncategorized',
-            sizes: [...new Set(row.product_variants?.map((v: any) => v.size) || [])] as string[],
-            colors: [...new Set(row.product_variants?.map((v: any) => v.color) || [])] as string[],
+            // Talla y color son opcionales, así que descartamos los null/vacíos
+            sizes: [...new Set(row.product_variants?.map((v: any) => v.size).filter(Boolean) || [])] as string[],
+            colors: [...new Set(row.product_variants?.map((v: any) => v.color).filter(Boolean) || [])] as string[],
             material: 'Consultar',
             description: row.description,
             product_variants: row.product_variants || []

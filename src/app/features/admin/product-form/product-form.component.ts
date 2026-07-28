@@ -108,12 +108,12 @@ import { TableModule } from 'primeng/table';
              <div *ngFor="let variant of variants.controls; let i = index" [formGroupName]="i" class="flex flex-col md:flex-row gap-4 items-stretch md:items-end bg-gray-50 p-4 rounded-xl border border-gray-100">
                 
                 <div class="flex-1 space-y-1 w-full">
-                   <label class="text-xs font-bold text-gray-500">Talla</label>
+                   <label class="text-xs font-bold text-gray-500">Talla <span class="font-normal text-gray-400">(opcional)</span></label>
                    <input pInputText formControlName="size" placeholder="S, M, 32..." class="w-full p-inputtext-sm" />
                 </div>
 
                 <div class="flex-1 space-y-1 w-full">
-                   <label class="text-xs font-bold text-gray-500">Color</label>
+                   <label class="text-xs font-bold text-gray-500">Color <span class="font-normal text-gray-400">(opcional)</span></label>
                    <input pInputText formControlName="color" placeholder="Rojo, Azul..." class="w-full p-inputtext-sm" />
                 </div>
 
@@ -194,8 +194,8 @@ export class ProductFormComponent implements OnInit {
 
     addVariant() {
         const variantGroup = this.fb.group({
-            size: ['', Validators.required],
-            color: ['', Validators.required],
+            size: [''],
+            color: [''],
             stock: [0, [Validators.required, Validators.min(0)]]
         });
         this.variants.push(variantGroup);
@@ -236,8 +236,8 @@ export class ProductFormComponent implements OnInit {
                 if (data.product_variants) {
                     data.product_variants.forEach((v: any) => {
                         this.variants.push(this.fb.group({
-                            size: [v.size, Validators.required],
-                            color: [v.color, Validators.required],
+                            size: [v.size],
+                            color: [v.color],
                             stock: [v.stock, [Validators.required, Validators.min(0)]]
                         }));
                     });
