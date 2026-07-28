@@ -36,10 +36,10 @@ import { DialogModule } from 'primeng/dialog';
         </div>
 
         <ng-container *ngIf="!loading() && product() as p">
-            <div class="grid grid-cols-1 lg:grid-cols-2 gap-8 lg:gap-12">
+            <div class="grid grid-cols-1 lg:grid-cols-[minmax(0,340px)_1fr] gap-8 lg:gap-10">
 
                 <!-- Gallery -->
-                <div class="space-y-3">
+                <div class="space-y-3 w-full max-w-[340px] mx-auto lg:mx-0">
                     <div class="relative aspect-[3/4] rounded-2xl overflow-hidden bg-gray-50 border border-pink-50 shadow-sm cursor-zoom-in group/image"
                          (click)="showPreview()"
                          (touchstart)="onCarouselTouchStart($event)"
@@ -75,18 +75,18 @@ import { DialogModule } from 'primeng/dialog';
 
                 <!-- Info -->
                 <div class="flex flex-col">
-                    <span class="inline-block self-start py-1 px-3 rounded-full bg-[#fdf2f4] text-palo-rosa text-xs font-bold tracking-wider mb-4">{{p.category | uppercase}}</span>
+                    <span class="inline-block self-start py-1 px-3 rounded-full bg-[#fdf2f4] text-palo-rosa text-xs font-bold tracking-wider mb-3">{{p.category | uppercase}}</span>
 
-                    <h1 class="text-3xl sm:text-4xl font-extrabold text-gray-900 mb-3 font-serif leading-tight">{{p.name}}</h1>
+                    <h1 class="text-2xl sm:text-3xl font-extrabold text-gray-900 mb-2 font-serif leading-tight">{{p.name}}</h1>
 
-                    <p class="text-3xl font-bold text-palo-rosa mb-6">S/. {{p.price | number:'1.2-2'}}</p>
+                    <p class="text-2xl font-bold text-palo-rosa mb-5">S/. {{p.price | number:'1.2-2'}}</p>
 
-                    <div class="mb-8">
+                    <div class="mb-6">
                         <h2 class="font-bold mb-2 text-xs text-gray-400 uppercase tracking-widest">Descripción</h2>
                         <p class="text-gray-600 leading-relaxed whitespace-pre-line">{{p.description || 'Sin descripción disponible.'}}</p>
                     </div>
 
-                    <div class="flex items-center gap-2 mb-8 text-sm font-medium" [class.text-green-600]="hasStock" [class.text-gray-400]="!hasStock">
+                    <div class="flex items-center gap-2 mb-6 text-sm font-medium" [class.text-green-600]="hasStock" [class.text-gray-400]="!hasStock">
                         <i class="pi" [class.pi-check-circle]="hasStock" [class.pi-times-circle]="!hasStock"></i>
                         <span>{{hasStock ? 'Disponible' : 'Agotado'}}</span>
                     </div>
@@ -113,7 +113,7 @@ import { DialogModule } from 'primeng/dialog';
             </div>
 
             <!-- Related -->
-            <div *ngIf="related().length > 0" class="mt-16">
+            <div *ngIf="related().length > 0" class="mt-12">
                 <div class="flex justify-between items-center mb-6">
                     <h2 class="text-2xl font-bold text-gray-800 font-serif">También te puede gustar</h2>
                     <a routerLink="/" class="text-sm text-palo-rosa font-bold hover:underline">Ver todo</a>
