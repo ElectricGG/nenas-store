@@ -70,6 +70,34 @@ export class ProductService {
         );
     }
 
+    // Storefront detail page: same shape as getProducts(), for a single product.
+    // getProductById() below stays untouched because the admin form depends on its raw shape.
+    getProductDetail(id: string): Observable<Product | null> {
+        const query = this.supabase
+            .from('products')
+            .select(`
+                id,
+                name,
+                description,
+                price,
+                image_url,
+                images,
+                category:categories(name),
+                product_variants(size, color, stock)
+            `)
+            .eq('id', id)
+            .eq('active', true)
+            .limit(1);
+
+        return from(query).pipe(
+            map(({ data, error }) => {
+                if (error) throw error;
+                const row = (data || [])[0];
+                return row ? this.mapRowToProduct(row) : null;
+            })
+        );
+    }
+
     getProductById(id: string): Observable<any> {
         // Fetch raw data including variants with stock
         const query = this.supabase

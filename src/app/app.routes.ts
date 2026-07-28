@@ -1,6 +1,7 @@
 
 import { Routes } from '@angular/router';
 import { CatalogComponent } from './features/catalog/catalog.component';
+import { ProductDetailComponent } from './features/catalog/product-detail/product-detail.component';
 import { PublicLayoutComponent } from './layouts/public-layout/public-layout.component';
 import { LoginComponent } from './features/auth/login/login.component';
 import { AdminLayoutComponent } from './features/admin/layout/admin-layout.component';
@@ -15,7 +16,8 @@ export const routes: Routes = [
         path: '',
         component: PublicLayoutComponent,
         children: [
-            { path: '', component: CatalogComponent }
+            { path: '', component: CatalogComponent },
+            { path: 'producto/:id', component: ProductDetailComponent }
         ]
     },
 
