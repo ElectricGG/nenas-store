@@ -1,18 +1,17 @@
 
-import { Component, Input, inject, OnInit, ElementRef, ViewChild } from '@angular/core';
+import { Component, Input, inject, ElementRef, ViewChild } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { Product } from '../../../../core/services/product.service';
 import { CartService } from '../../../../core/services/cart.service';
 import { AnalyticsService } from '../../../../core/services/analytics.service';
 import { ButtonModule } from 'primeng/button';
 import { DialogModule } from 'primeng/dialog';
-import { FormsModule } from '@angular/forms';
 import { CartAnimationService } from '../../../../core/services/cart-animation.service';
 
 @Component({
     selector: 'app-product-card',
     standalone: true,
-    imports: [CommonModule, ButtonModule, DialogModule, FormsModule],
+    imports: [CommonModule, ButtonModule, DialogModule],
     template: `
     <div class="bg-white rounded-xl p-3 shadow-sm hover:shadow-xl transition-all duration-300 group border border-transparent hover:border-pink-100 flex flex-col h-full relative overflow-hidden">
       <!-- Image -->
@@ -48,19 +47,6 @@ import { CartAnimationService } from '../../../../core/services/cart-animation.s
         <p class="text-lg font-bold text-palo-rosa mb-2">S/. {{product.price | number:'1.2-2'}}</p>
         
         <div class="mt-auto space-y-3">
-             <!-- Selections -->
-             <div *ngIf="availableColors.length > 0">
-                <label class="text-[9px] uppercase font-bold text-gray-400 block mb-0.5 tracking-wider">Color</label>
-                <div class="relative">
-                    <select [(ngModel)]="selectedColor" class="w-full appearance-none bg-gray-50 border border-gray-200 text-gray-700 py-1 px-2 pr-6 rounded-md leading-tight focus:outline-none focus:bg-white focus:border-palo-rosa text-[11px] transition-colors cursor-pointer h-7">
-                         <option *ngFor="let c of availableColors" [value]="c">{{c}}</option>
-                    </select>
-                    <div class="pointer-events-none absolute inset-y-0 right-0 flex items-center px-1 text-gray-500">
-                        <i class="pi pi-chevron-down text-[8px]"></i>
-                    </div>
-                </div>
-             </div>
-      
              <div class="flex gap-2">
                 <button pButton 
                     [disabled]="!hasStock"
@@ -106,7 +92,7 @@ import { CartAnimationService } from '../../../../core/services/cart-animation.s
     </p-dialog>
   `
 })
-export class ProductCardComponent implements OnInit {
+export class ProductCardComponent {
     @Input({ required: true }) product!: Product;
     @ViewChild('productImage') productImage!: ElementRef;
 
@@ -114,9 +100,6 @@ export class ProductCardComponent implements OnInit {
     cartAnimationService = inject(CartAnimationService);
     analyticsService = inject(AnalyticsService);
 
-    selectedColor: string = '';
-
-    availableColors: string[] = [];
     isAdding = false;
     displayPreview = false;
     isZoomed = false;
@@ -134,39 +117,8 @@ export class ProductCardComponent implements OnInit {
         // If product has no variants (e.g. unique item?), assume in stock or check global stock prop if added later
         if (!this.product.product_variants || this.product.product_variants.length === 0) return true;
 
-        // Product without colors: it's enough that any variant has stock
-        if (this.availableColors.length === 0) {
-            return this.product.product_variants.some(v => v.stock > 0);
-        }
-
-        // Stock is per color: available if any variant of that color still has stock
-        return this.product.product_variants.some(v =>
-            v.color === this.selectedColor && v.stock > 0
-        );
-    }
-
-    ngOnInit() {
-        this.updateAvailableColors();
-    }
-
-    updateAvailableColors() {
-        if (!this.product.product_variants) {
-            this.availableColors = [];
-            return;
-        }
-
-        // Get unique colors across all variants (color is optional, so drop the empty ones)
-        this.availableColors = [...new Set(this.product.product_variants.map(v => v.color).filter(Boolean))];
-
-        // Auto-select first color, or clear if none
-        if (this.availableColors.length > 0) {
-            // Try to keep selected color if valid, otherwise pick first
-            if (!this.availableColors.includes(this.selectedColor)) {
-                this.selectedColor = this.availableColors[0];
-            }
-        } else {
-            this.selectedColor = '';
-        }
+        // Variants are stock-only from the storefront: available if any of them has stock
+        return this.product.product_variants.some(v => v.stock > 0);
     }
 
     addToCart() {
@@ -176,7 +128,7 @@ export class ProductCardComponent implements OnInit {
             this.cartAnimationService.animateFlyToCart(this.productImage.nativeElement, this.product.image);
         }
 
-        this.cartService.addToCart(this.product, this.selectedColor);
+        this.cartService.addToCart(this.product);
 
         this.isAdding = true;
         setTimeout(() => {
@@ -187,9 +139,9 @@ export class ProductCardComponent implements OnInit {
     buyNow() {
         if (!this.hasStock) return;
 
-        this.analyticsService.logPurchaseClick(this.product, this.selectedColor);
+        this.analyticsService.logPurchaseClick(this.product);
 
-        this.cartService.checkoutSingleItem(this.product, this.selectedColor);
+        this.cartService.checkoutSingleItem(this.product);
     }
 
     showPreview() {
