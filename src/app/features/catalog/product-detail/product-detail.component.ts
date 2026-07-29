@@ -114,12 +114,28 @@ import { DialogModule } from 'primeng/dialog';
 
             <!-- Related -->
             <div *ngIf="related().length > 0" class="mt-12">
-                <div class="flex justify-between items-center mb-6">
-                    <h2 class="text-2xl font-bold text-gray-800 font-serif">También te puede gustar</h2>
-                    <a routerLink="/" class="text-sm text-palo-rosa font-bold hover:underline">Ver todo</a>
+                <div class="flex justify-between items-center gap-4 mb-6">
+                    <h2 class="text-xl sm:text-2xl font-bold text-gray-800 font-serif leading-tight">También te puede gustar</h2>
+
+                    <div class="flex items-center gap-2 shrink-0">
+                        <button (click)="scrollRelated(-1)" [disabled]="!canScrollPrev"
+                            aria-label="Anterior"
+                            class="w-9 h-9 rounded-full border border-gray-200 bg-white text-gray-700 flex items-center justify-center shadow-sm transition-all hover:border-palo-rosa hover:text-palo-rosa disabled:opacity-30 disabled:cursor-not-allowed disabled:hover:border-gray-200 disabled:hover:text-gray-700">
+                            <i class="pi pi-chevron-left text-xs font-bold"></i>
+                        </button>
+                        <button (click)="scrollRelated(1)" [disabled]="!canScrollNext"
+                            aria-label="Siguiente"
+                            class="w-9 h-9 rounded-full border border-gray-200 bg-white text-gray-700 flex items-center justify-center shadow-sm transition-all hover:border-palo-rosa hover:text-palo-rosa disabled:opacity-30 disabled:cursor-not-allowed disabled:hover:border-gray-200 disabled:hover:text-gray-700">
+                            <i class="pi pi-chevron-right text-xs font-bold"></i>
+                        </button>
+                    </div>
                 </div>
-                <div class="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4">
-                    <app-product-card *ngFor="let r of related()" [product]="r"></app-product-card>
+
+                <div #relatedTrack (scroll)="onRelatedScroll()"
+                     class="related-track flex gap-4 overflow-x-auto scroll-smooth snap-x snap-mandatory pb-2">
+                    <div *ngFor="let r of related()" class="snap-start shrink-0 w-[42%] sm:w-[31%] md:w-[23%] lg:w-[19%]">
+                        <app-product-card [product]="r"></app-product-card>
+                    </div>
                 </div>
             </div>
         </ng-container>
@@ -149,7 +165,17 @@ import { DialogModule } from 'primeng/dialog';
             </ng-container>
         </div>
     </p-dialog>
-  `
+  `,
+    styles: [`
+    /* Native horizontal scroll on touch, without the scrollbar showing */
+    .related-track {
+      scrollbar-width: none;
+      -ms-overflow-style: none;
+    }
+    .related-track::-webkit-scrollbar {
+      display: none;
+    }
+  `]
 })
 export class ProductDetailComponent {
     private route = inject(ActivatedRoute);
@@ -159,10 +185,14 @@ export class ProductDetailComponent {
     analyticsService = inject(AnalyticsService);
 
     @ViewChild('detailImage') detailImage!: ElementRef;
+    @ViewChild('relatedTrack') relatedTrack?: ElementRef<HTMLDivElement>;
 
     product = signal<Product | null>(null);
     related = signal<Product[]>([]);
     loading = signal(true);
+
+    canScrollPrev = false;
+    canScrollNext = false;
 
     isAdding = false;
     displayPreview = false;
@@ -202,12 +232,37 @@ export class ProductDetailComponent {
     private loadRelated(current: Product) {
         this.productService.getProducts().subscribe({
             next: (all) => {
+                // The whole category, minus this product. The list already comes
+                // ordered by created_at desc, so the newest show up first.
                 this.related.set(
-                    all.filter(p => p.id !== current.id && p.category === current.category).slice(0, 4)
+                    all.filter(p => p.id !== current.id && p.category === current.category)
                 );
+                // Let the track render before measuring it for the arrows
+                setTimeout(() => this.onRelatedScroll(), 0);
             },
             error: () => this.related.set([])
         });
+    }
+
+    scrollRelated(direction: -1 | 1) {
+        const track = this.relatedTrack?.nativeElement;
+        if (!track) return;
+
+        // Roughly one screenful at a time, whatever the breakpoint
+        track.scrollBy({ left: direction * track.clientWidth * 0.85, behavior: 'smooth' });
+    }
+
+    onRelatedScroll() {
+        const track = this.relatedTrack?.nativeElement;
+        if (!track) {
+            this.canScrollPrev = false;
+            this.canScrollNext = false;
+            return;
+        }
+
+        const tolerance = 8; // sub-pixel scroll positions never land exactly on the edge
+        this.canScrollPrev = track.scrollLeft > tolerance;
+        this.canScrollNext = track.scrollLeft + track.clientWidth < track.scrollWidth - tolerance;
     }
 
     get currentImage(): string {

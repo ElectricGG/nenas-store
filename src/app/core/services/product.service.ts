@@ -78,7 +78,8 @@ export class ProductService {
                     category:categories(name),
                     product_variants(size, color, stock)
                 `)
-                .eq('active', true);
+                .eq('active', true)
+                .order('created_at', { ascending: false });
 
             this.cachedAt = Date.now();
             this.productsCache$ = from(query).pipe(
