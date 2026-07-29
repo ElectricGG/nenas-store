@@ -97,7 +97,8 @@ export class AdminProductsComponent {
     }
 
     loadProducts() {
-        this.productService.getProducts().subscribe(p => this.products.set(p));
+        // The admin must always see the truth, so this one skips the cache
+        this.productService.getProducts(true).subscribe(p => this.products.set(p));
     }
 
     confirmDelete(product: Product) {

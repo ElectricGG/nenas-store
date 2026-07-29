@@ -1,5 +1,5 @@
 import { Injectable, inject } from '@angular/core';
-import { Observable, from, map, switchMap } from 'rxjs';
+import { Observable, from, map, of, switchMap, shareReplay, catchError, throwError } from 'rxjs';
 import { SupabaseService } from './supabase.service';
 
 // Read Models (UI)
@@ -45,34 +45,74 @@ export interface Category {
 export class ProductService {
     private supabase = inject(SupabaseService).client;
 
+    // --- CACHE ---
+    // Only the admin writes products, so the active list is kept in memory and
+    // shared by the catalog, the detail page and the related row. Any write
+    // invalidates it; the TTL is the safety net for other people's browsers.
+    private readonly CACHE_TTL_MS = 5 * 60 * 1000;
+    private productsCache$: Observable<Product[]> | null = null;
+    private cachedAt = 0;
+
+    invalidateProductsCache() {
+        this.productsCache$ = null;
+        this.cachedAt = 0;
+    }
+
+    private get cacheExpired(): boolean {
+        return Date.now() - this.cachedAt > this.CACHE_TTL_MS;
+    }
+
     // --- READ ---
 
-    getProducts(): Observable<Product[]> {
-        const query = this.supabase
-            .from('products')
-            .select(`
-                id,
-                name,
-                description,
-                price,
-                image_url,
-                images,
-                category:categories(name),
-                product_variants(size, color, stock)
-            `)
-            .eq('active', true);
+    getProducts(forceRefresh = false): Observable<Product[]> {
+        if (forceRefresh || !this.productsCache$ || this.cacheExpired) {
+            const query = this.supabase
+                .from('products')
+                .select(`
+                    id,
+                    name,
+                    description,
+                    price,
+                    image_url,
+                    images,
+                    category:categories(name),
+                    product_variants(size, color, stock)
+                `)
+                .eq('active', true);
 
-        return from(query).pipe(
-            map(({ data, error }) => {
-                if (error) throw error;
-                return (data || []).map((row: any) => this.mapRowToProduct(row));
-            })
-        );
+            this.cachedAt = Date.now();
+            this.productsCache$ = from(query).pipe(
+                map(({ data, error }) => {
+                    if (error) throw error;
+                    return (data || []).map((row: any) => this.mapRowToProduct(row));
+                }),
+                // A failed request must not stay cached, or it would replay the error
+                catchError(err => {
+                    this.invalidateProductsCache();
+                    return throwError(() => err);
+                }),
+                shareReplay({ bufferSize: 1, refCount: false })
+            );
+        }
+
+        return this.productsCache$;
     }
 
     // Storefront detail page: same shape as getProducts(), for a single product.
     // getProductById() below stays untouched because the admin form depends on its raw shape.
+    // Served from the cached list when possible, so opening a product costs no request.
     getProductDetail(id: string): Observable<Product | null> {
+        return this.getProducts().pipe(
+            catchError(() => of([] as Product[])),
+            switchMap(products => {
+                const cached = products.find(p => p.id === id);
+                // Not in the cached list: it may have been created after we cached
+                return cached ? of(cached) : this.fetchProductDetail(id);
+            })
+        );
+    }
+
+    private fetchProductDetail(id: string): Observable<Product | null> {
         const query = this.supabase
             .from('products')
             .select(`
@@ -162,6 +202,8 @@ export class ProductService {
             .insert(variantsWithProductId);
 
         if (varError) throw varError;
+
+        this.invalidateProductsCache();
     }
 
     async updateProduct(id: string, productData: ProductInput, variants: ProductVariantInput[], newImageFiles: File[], existingImages: string[] = []): Promise<void> {
@@ -209,6 +251,8 @@ export class ProductService {
             .insert(variantsWithProductId);
 
         if (varError) throw varError;
+
+        this.invalidateProductsCache();
     }
 
     async deleteProduct(id: string): Promise<void> {
@@ -219,6 +263,8 @@ export class ProductService {
             .eq('id', id);
 
         if (error) throw error;
+
+        this.invalidateProductsCache();
     }
 
     // --- HELPERS ---
