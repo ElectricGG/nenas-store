@@ -281,18 +281,86 @@ export class ProductService {
     }
 
     private async uploadImage(file: File): Promise<string> {
-        const fileExt = file.name.split('.').pop();
+        // Phone photos come in at 1-3 MB and are shown at ~200-400px wide.
+        // Shrinking them before upload is what actually makes the catalog load fast.
+        const optimized = await this.compressImage(file);
+
+        const fileExt = optimized.type === 'image/jpeg' ? 'jpg' : (file.name.split('.').pop() || 'jpg');
         const fileName = `${Date.now()}-${Math.random().toString(36).substring(2)}.${fileExt}`; // More unique name
         const filePath = `${fileName}`;
 
         const { error: uploadError } = await this.supabase.storage
             .from('products')
-            .upload(filePath, file);
+            .upload(filePath, optimized, { contentType: optimized.type || file.type });
 
         if (uploadError) throw uploadError;
 
         const { data } = this.supabase.storage.from('products').getPublicUrl(filePath);
         return data.publicUrl;
+    }
+
+    // --- IMAGE COMPRESSION ---
+
+    private readonly MAX_IMAGE_SIZE_PX = 1200;
+    private readonly IMAGE_QUALITY = 0.8;
+
+    // Resizes and re-encodes in the browser before uploading.
+    // Anything that goes wrong falls back to the original file, so a save never
+    // fails because of the compression.
+    private compressImage(file: File): Promise<Blob> {
+        return new Promise<Blob>((resolve) => {
+            if (!file.type.startsWith('image/')) {
+                resolve(file);
+                return;
+            }
+
+            const objectUrl = URL.createObjectURL(file);
+            const img = new Image();
+
+            img.onload = () => {
+                URL.revokeObjectURL(objectUrl);
+
+                const { width, height } = this.fitWithin(img.width, img.height);
+                const canvas = document.createElement('canvas');
+                canvas.width = width;
+                canvas.height = height;
+
+                const ctx = canvas.getContext('2d');
+                if (!ctx) {
+                    resolve(file);
+                    return;
+                }
+
+                // JPEG has no transparency: paint white first so PNGs don't turn black
+                ctx.fillStyle = '#FFFFFF';
+                ctx.fillRect(0, 0, width, height);
+                ctx.drawImage(img, 0, 0, width, height);
+
+                canvas.toBlob(
+                    (blob) => resolve(blob && blob.size < file.size ? blob : file),
+                    'image/jpeg',
+                    this.IMAGE_QUALITY
+                );
+            };
+
+            img.onerror = () => {
+                URL.revokeObjectURL(objectUrl);
+                resolve(file);
+            };
+
+            img.src = objectUrl;
+        });
+    }
+
+    private fitWithin(width: number, height: number): { width: number; height: number } {
+        const largest = Math.max(width, height);
+        if (largest <= this.MAX_IMAGE_SIZE_PX) return { width, height };
+
+        const ratio = this.MAX_IMAGE_SIZE_PX / largest;
+        return {
+            width: Math.round(width * ratio),
+            height: Math.round(height * ratio)
+        };
     }
 
     private mapRowToProduct(row: any): Product {
