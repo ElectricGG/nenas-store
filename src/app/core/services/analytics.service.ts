@@ -7,10 +7,11 @@ export interface DashboardStats {
     visitors_today: number;
     views_today: number;
     clicks_today: number;
-    visitors_7d: number;
-    views_7d: number;
-    clicks_7d: number;
+    visitors_total: number;
+    views_total: number;
+    clicks_total: number;
     total_products: number;
+    first_view_at: string | null;
 }
 
 export interface TopViewedProduct {
@@ -122,8 +123,8 @@ export class AnalyticsService {
         );
     }
 
-    getTopViewedProducts(dias = 7, tope = 5): Observable<TopViewedProduct[]> {
-        return from(this.supabase.rpc('top_viewed_products', { dias, tope })).pipe(
+    getTopViewedProducts(tope = 5): Observable<TopViewedProduct[]> {
+        return from(this.supabase.rpc('top_viewed_products', { tope })).pipe(
             map(({ data, error }) => {
                 if (error) throw error;
                 return (data || []) as TopViewedProduct[];
