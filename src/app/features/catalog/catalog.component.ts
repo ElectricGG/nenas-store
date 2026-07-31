@@ -5,6 +5,7 @@ import { ProductCardComponent } from './components/product-card/product-card.com
 import { FormsModule } from '@angular/forms';
 import { SliderModule } from 'primeng/slider';
 import { CheckboxModule } from 'primeng/checkbox';
+import { searchProducts } from '../../core/utils/product-search';
 
 @Component({
     selector: 'app-catalog',
@@ -136,57 +137,16 @@ export class CatalogComponent {
     filteredProducts = computed(() => {
         this.filtersTrigger(); // dependency
 
-        const query = this.normalize(this.searchTerm);
-        const terms = query.split(/\s+/).filter(Boolean);
-
         const matches = this.products().filter(p => {
             const matchCat = this.selectedCategories.length === 0 || this.selectedCategories.includes(p.category);
             const matchPrice = p.price >= this.priceRange[0] && p.price <= this.priceRange[1];
             const matchColor = this.selectedColors.length === 0 || p.colors.some(c => this.selectedColors.includes(c));
-            const matchSearch = terms.length === 0 || this.matchesSearch(p, terms);
-            return matchCat && matchPrice && matchColor && matchSearch;
+            return matchCat && matchPrice && matchColor;
         });
 
-        if (terms.length === 0) return matches;
-
-        // Los aciertos en el nombre pesan mas que los de la descripcion.
-        // El indice original desempata, para conservar el orden por mas reciente.
-        return matches
-            .map((product, index) => ({ product, index, score: this.score(product, terms, query) }))
-            .sort((a, b) => b.score - a.score || a.index - b.index)
-            .map(entry => entry.product);
+        // Se busca sobre lo ya filtrado, y el resultado queda ordenado por relevancia
+        return searchProducts(matches, this.searchTerm);
     });
-
-    // Minusculas y sin tildes, para que "munequera" encuentre "Muñequeras"
-    private normalize(text: string | null | undefined): string {
-        return (text || '')
-            .toLowerCase()
-            .normalize('NFD')
-            .replace(/[̀-ͯ]/g, '') // marcas diacriticas separadas por NFD
-            .trim();
-    }
-
-    // Cada palabra buscada debe aparecer en el nombre o en la descripcion
-    private matchesSearch(product: Product, terms: string[]): boolean {
-        const haystack = `${this.normalize(product.name)} ${this.normalize(product.description)}`;
-        return terms.every(term => haystack.includes(term));
-    }
-
-    private score(product: Product, terms: string[], query: string): number {
-        const name = this.normalize(product.name);
-        const description = this.normalize(product.description);
-
-        let score = 0;
-        if (name.startsWith(query)) score += 100;
-        else if (name.includes(query)) score += 50;
-
-        for (const term of terms) {
-            if (name.includes(term)) score += 10;
-            else if (description.includes(term)) score += 1;
-        }
-
-        return score;
-    }
 
     // Signal to trigger re-computation when mutable props change
     filtersTrigger = signal(0);

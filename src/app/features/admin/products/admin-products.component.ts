@@ -1,7 +1,9 @@
-import { Component, inject, signal } from '@angular/core';
+import { Component, computed, inject, signal } from '@angular/core';
 import { CommonModule } from '@angular/common';
+import { FormsModule } from '@angular/forms';
 import { RouterLink } from '@angular/router';
 import { Product, ProductService } from '../../../core/services/product.service';
+import { searchProducts } from '../../../core/utils/product-search';
 import { TableModule } from 'primeng/table';
 import { ButtonModule } from 'primeng/button';
 import { InputTextModule } from 'primeng/inputtext';
@@ -15,6 +17,7 @@ import { ToastModule } from 'primeng/toast';
     standalone: true,
     imports: [
         CommonModule,
+        FormsModule,
         RouterLink,
         TableModule,
         ButtonModule,
@@ -34,9 +37,27 @@ import { ToastModule } from 'primeng/toast';
             <button pButton label="Nuevo Producto" icon="pi pi-plus" routerLink="new" class="w-full sm:w-auto !bg-palo-rosa !border-palo-rosa !rounded-xl"></button>
         </div>
 
+        <div class="flex flex-col sm:flex-row sm:items-center gap-3">
+            <div class="relative flex-1">
+                <i class="pi pi-search absolute left-4 top-1/2 -translate-y-1/2 text-gray-400 text-sm pointer-events-none"></i>
+                <input type="text"
+                       [ngModel]="searchTerm()"
+                       (ngModelChange)="searchTerm.set($event)"
+                       placeholder="Buscar por nombre o descripción..."
+                       class="w-full pl-11 pr-10 py-3 rounded-xl border border-gray-200 bg-white shadow-sm text-sm text-gray-700 placeholder-gray-400 focus:outline-none focus:border-palo-rosa transition-colors">
+                <button *ngIf="searchTerm()" (click)="searchTerm.set('')" aria-label="Limpiar búsqueda"
+                        class="absolute right-3 top-1/2 -translate-y-1/2 w-6 h-6 rounded-full bg-gray-100 text-gray-500 flex items-center justify-center hover:bg-gray-200 transition-colors">
+                    <i class="pi pi-times text-[10px]"></i>
+                </button>
+            </div>
+            <span class="text-sm font-medium text-gray-500 shrink-0">
+                {{ filteredProducts().length }}<span *ngIf="searchTerm()"> de {{ products().length }}</span> productos
+            </span>
+        </div>
+
         <div class="card bg-white rounded-2xl shadow-sm border border-gray-100 overflow-hidden">
             <div class="overflow-x-auto">
-                <p-table [value]="products()" [tableStyle]="{ 'min-width': '60rem' }" styleClass="p-datatable-sm p-datatable-striped">
+                <p-table [value]="filteredProducts()" [tableStyle]="{ 'min-width': '60rem' }" styleClass="p-datatable-sm p-datatable-striped">
                     <ng-template pTemplate="header">
                         <tr>
                             <th class="w-16">Imagen</th>
@@ -75,7 +96,11 @@ import { ToastModule } from 'primeng/toast';
                     <ng-template pTemplate="emptymessage">
                         <tr>
                             <td colspan="6" class="text-center py-8 text-gray-400">
-                                No hay productos registrados.
+                                <ng-container *ngIf="searchTerm(); else sinProductos">
+                                    Ningún producto coincide con "{{ searchTerm() }}".
+                                    <button (click)="searchTerm.set('')" class="text-palo-rosa font-bold hover:underline ml-1">Limpiar</button>
+                                </ng-container>
+                                <ng-template #sinProductos>No hay productos registrados.</ng-template>
                             </td>
                         </tr>
                     </ng-template>
@@ -91,6 +116,10 @@ export class AdminProductsComponent {
     messageService = inject(MessageService);
 
     products = signal<Product[]>([]);
+    searchTerm = signal('');
+
+    // Misma búsqueda que el catálogo público: nombre + descripción, sin tildes
+    filteredProducts = computed(() => searchProducts(this.products(), this.searchTerm()));
 
     constructor() {
         this.loadProducts();
