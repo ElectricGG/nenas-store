@@ -85,10 +85,21 @@ import { CheckboxModule } from 'primeng/checkbox';
                     <div class="absolute right-0 top-0 h-full w-1/3 bg-gradient-to-l from-pink-100/50 to-transparent hidden sm:block"></div>
                 </div>
 
-                <!-- Products Grid -->
-                <div class="flex justify-between items-center mb-6">
-                    <h2 class="text-lg font-bold text-gray-800">{{filteredProducts().length}} Productos encontrados</h2>
-                    <!-- Sort dropdown could go here -->
+                <!-- Search + count -->
+                <div class="flex flex-col sm:flex-row sm:items-center gap-3 mb-6">
+                    <div class="relative flex-1">
+                        <i class="pi pi-search absolute left-4 top-1/2 -translate-y-1/2 text-gray-400 text-sm pointer-events-none"></i>
+                        <input type="text"
+                               [(ngModel)]="searchTerm"
+                               (ngModelChange)="triggerUpdate()"
+                               placeholder="Buscar producto o marca..."
+                               class="w-full pl-11 pr-10 py-3 rounded-2xl border border-pink-50 bg-white shadow-sm text-sm text-gray-700 placeholder-gray-400 focus:outline-none focus:border-palo-rosa transition-colors">
+                        <button *ngIf="searchTerm" (click)="clearSearch()" aria-label="Limpiar búsqueda"
+                                class="absolute right-3 top-1/2 -translate-y-1/2 w-6 h-6 rounded-full bg-gray-100 text-gray-500 flex items-center justify-center hover:bg-gray-200 transition-colors">
+                            <i class="pi pi-times text-[10px]"></i>
+                        </button>
+                    </div>
+                    <h2 class="text-sm font-bold text-gray-800 shrink-0 sm:text-right">{{filteredProducts().length}} productos</h2>
                 </div>
 
                 <div class="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 gap-4">
@@ -113,6 +124,7 @@ export class CatalogComponent {
     selectedCategories: string[] = [];
     priceRange: number[] = [0, 300];
     selectedColors: string[] = [];
+    searchTerm = '';
 
     showFiltersMobile = true;
 
@@ -123,13 +135,58 @@ export class CatalogComponent {
     // Main filtered products signal
     filteredProducts = computed(() => {
         this.filtersTrigger(); // dependency
-        return this.products().filter(p => {
+
+        const query = this.normalize(this.searchTerm);
+        const terms = query.split(/\s+/).filter(Boolean);
+
+        const matches = this.products().filter(p => {
             const matchCat = this.selectedCategories.length === 0 || this.selectedCategories.includes(p.category);
             const matchPrice = p.price >= this.priceRange[0] && p.price <= this.priceRange[1];
             const matchColor = this.selectedColors.length === 0 || p.colors.some(c => this.selectedColors.includes(c));
-            return matchCat && matchPrice && matchColor;
+            const matchSearch = terms.length === 0 || this.matchesSearch(p, terms);
+            return matchCat && matchPrice && matchColor && matchSearch;
         });
+
+        if (terms.length === 0) return matches;
+
+        // Los aciertos en el nombre pesan mas que los de la descripcion.
+        // El indice original desempata, para conservar el orden por mas reciente.
+        return matches
+            .map((product, index) => ({ product, index, score: this.score(product, terms, query) }))
+            .sort((a, b) => b.score - a.score || a.index - b.index)
+            .map(entry => entry.product);
     });
+
+    // Minusculas y sin tildes, para que "munequera" encuentre "Muñequeras"
+    private normalize(text: string | null | undefined): string {
+        return (text || '')
+            .toLowerCase()
+            .normalize('NFD')
+            .replace(/[̀-ͯ]/g, '') // marcas diacriticas separadas por NFD
+            .trim();
+    }
+
+    // Cada palabra buscada debe aparecer en el nombre o en la descripcion
+    private matchesSearch(product: Product, terms: string[]): boolean {
+        const haystack = `${this.normalize(product.name)} ${this.normalize(product.description)}`;
+        return terms.every(term => haystack.includes(term));
+    }
+
+    private score(product: Product, terms: string[], query: string): number {
+        const name = this.normalize(product.name);
+        const description = this.normalize(product.description);
+
+        let score = 0;
+        if (name.startsWith(query)) score += 100;
+        else if (name.includes(query)) score += 50;
+
+        for (const term of terms) {
+            if (name.includes(term)) score += 10;
+            else if (description.includes(term)) score += 1;
+        }
+
+        return score;
+    }
 
     // Signal to trigger re-computation when mutable props change
     filtersTrigger = signal(0);
@@ -155,6 +212,12 @@ export class CatalogComponent {
         this.selectedCategories = [];
         this.priceRange = [0, 300];
         this.selectedColors = [];
+        this.searchTerm = '';
+        this.triggerUpdate();
+    }
+
+    clearSearch() {
+        this.searchTerm = '';
         this.triggerUpdate();
     }
 
@@ -163,7 +226,7 @@ export class CatalogComponent {
     }
 
     hasActiveFilters() {
-        return this.selectedCategories.length > 0 || this.priceRange[0] > 0 || this.priceRange[1] < 300 || this.selectedColors.length > 0;
+        return this.selectedCategories.length > 0 || this.priceRange[0] > 0 || this.priceRange[1] < 300 || this.selectedColors.length > 0 || this.searchTerm.trim().length > 0;
     }
 
     getColorHex(colorName: string): string {
