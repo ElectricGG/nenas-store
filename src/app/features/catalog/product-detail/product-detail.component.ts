@@ -98,23 +98,27 @@ import { WhatsappFormatPipe } from '../../../shared/pipes/whatsapp-format.pipe';
                     </div>
 
                     <div class="flex flex-col sm:flex-row gap-3 mt-auto">
+                        <!-- Accion principal: sumar al carrito -->
                         <button pButton
-                            [disabled]="!hasStock"
-                            [class.!bg-green-50]="isAdding"
-                            [class.!border-green-200]="isAdding"
-                            [class.!text-green-600]="isAdding"
-                            class="!bg-white !text-gray-700 !border-gray-200 hover:!bg-gray-50 hover:!border-gray-300 !rounded-xl !font-bold !shadow-sm transition-all !py-3 sm:!w-52 disabled:opacity-50 disabled:cursor-not-allowed"
-                            (click)="addToCart()">
-                            <i class="pi mr-2" [class.pi-shopping-cart]="!isAdding" [class.pi-check]="isAdding"></i>
-                            {{isAdding ? 'Agregado' : 'Agregar al carrito'}}
-                        </button>
-                        <button pButton
-                            [label]="hasStock ? 'Comprar por WhatsApp' : 'Agotado'"
-                            icon="pi pi-whatsapp"
                             [disabled]="!hasStock"
                             class="flex-1 !bg-palo-rosa !border-palo-rosa hover:!bg-pink-600 !rounded-xl !font-bold !shadow-md hover:!shadow-lg !shadow-pink-100 transition-all !py-3 disabled:opacity-50 disabled:bg-gray-400 disabled:border-gray-400 disabled:shadow-none"
+                            (click)="addToCart()">
+                            <i class="pi mr-2" [class.pi-shopping-cart]="!isAdding" [class.pi-check]="isAdding"></i>
+                            {{ hasStock ? (isAdding ? 'Agregado al carrito' : 'Agregar al carrito') : 'Agotado' }}
+                        </button>
+
+                        <!-- Secundaria: comprar solo este producto -->
+                        <button pButton
+                            label="Comprar solo este"
+                            icon="pi pi-whatsapp"
+                            [disabled]="!hasStock"
+                            class="!bg-white !text-green-600 !border-gray-200 hover:!bg-green-50 hover:!border-green-200 !rounded-xl !font-bold !shadow-sm transition-all !py-3 sm:!w-56 disabled:opacity-50 disabled:cursor-not-allowed"
                             (click)="buyNow()"></button>
                     </div>
+
+                    <p *ngIf="hasStock" class="text-xs text-gray-400 mt-3">
+                        Puedes juntar varios productos en el carrito y pedirlos todos en un solo mensaje.
+                    </p>
                 </div>
             </div>
 

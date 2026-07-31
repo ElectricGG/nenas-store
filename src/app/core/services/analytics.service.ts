@@ -61,6 +61,9 @@ export class AnalyticsService {
     // --- VISITAS ---
 
     async logPageView(path: string, productId: string | null = null): Promise<void> {
+        // Probar en local no debe ensuciar las estadisticas de produccion
+        if (this.esEntornoLocal()) return;
+
         try {
             const { error } = await this.supabase
                 .from('page_views')
@@ -79,6 +82,11 @@ export class AnalyticsService {
         } catch (err) {
             console.error('Page view crash:', err);
         }
+    }
+
+    private esEntornoLocal(): boolean {
+        const host = location.hostname;
+        return host === 'localhost' || host === '127.0.0.1' || host.startsWith('192.168.');
     }
 
     // Persiste entre visitas: sirve para contar personas, no solo vistas

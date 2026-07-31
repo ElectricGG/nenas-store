@@ -48,18 +48,23 @@ import { Router } from '@angular/router';
         
         <div class="mt-auto space-y-3">
              <div class="flex gap-2">
-                <button pButton 
+                <!-- Accion principal: sumar al carrito, para que el pedido junte varios productos -->
+                <button pButton
+                    [label]="hasStock ? (isAdding ? 'Agregado' : 'Agregar') : 'Agotado'"
+                    [icon]="isAdding ? 'pi pi-check' : 'pi pi-shopping-cart'"
                     [disabled]="!hasStock"
-                    [class.!bg-green-50]="isAdding"
-                    [class.!border-green-200]="isAdding"
-                    [class.!text-green-600]="isAdding"
-                    class="!bg-white !text-gray-700 !border-gray-200 hover:!bg-gray-50 hover:!border-gray-300 !rounded-lg !w-9 !h-9 !shrink-0 !shadow-sm transition-all duration-300 transform !p-0 disabled:opacity-50 disabled:cursor-not-allowed" 
-                    [class.scale-110]="isAdding"
-                    (click)="addToCart()">
-                    <i *ngIf="!isAdding" class="pi pi-shopping-cart text-sm"></i>
-                    <i *ngIf="isAdding" class="pi pi-check text-sm font-bold"></i>
+                    class="flex-1 !bg-palo-rosa !border-palo-rosa hover:!bg-pink-600 !rounded-lg !text-xs !font-bold !shadow-md hover:!shadow-lg !shadow-pink-100 transition-all h-9 disabled:opacity-50 disabled:bg-gray-400 disabled:border-gray-400 disabled:shadow-none"
+                    (click)="addToCart()"></button>
+
+                <!-- Secundaria: comprar solo este producto por WhatsApp -->
+                <button pButton
+                    [disabled]="!hasStock"
+                    title="Comprar solo este por WhatsApp"
+                    aria-label="Comprar solo este por WhatsApp"
+                    class="!bg-white !text-green-600 !border-gray-200 hover:!bg-green-50 hover:!border-green-200 !rounded-lg !w-9 !h-9 !shrink-0 !shadow-sm transition-all !p-0 disabled:opacity-50 disabled:cursor-not-allowed"
+                    (click)="buyNow()">
+                    <i class="pi pi-whatsapp text-sm"></i>
                 </button>
-                <button pButton [label]="hasStock ? 'Comprar' : 'Agotado'" [disabled]="!hasStock" class="flex-1 !bg-palo-rosa !border-palo-rosa hover:!bg-pink-600 !rounded-lg !text-xs !font-bold !shadow-md hover:!shadow-lg !shadow-pink-100 transition-all h-9 disabled:opacity-50 disabled:bg-gray-400 disabled:border-gray-400 disabled:shadow-none" (click)="buyNow()"></button>
              </div>
         </div>
       </div>
