@@ -8,11 +8,12 @@ import { CartAnimationService } from '../../../core/services/cart-animation.serv
 import { ProductCardComponent } from '../components/product-card/product-card.component';
 import { ButtonModule } from 'primeng/button';
 import { DialogModule } from 'primeng/dialog';
+import { WhatsappFormatPipe } from '../../../shared/pipes/whatsapp-format.pipe';
 
 @Component({
     selector: 'app-product-detail',
     standalone: true,
-    imports: [CommonModule, RouterModule, ButtonModule, DialogModule, ProductCardComponent],
+    imports: [CommonModule, RouterModule, ButtonModule, DialogModule, ProductCardComponent, WhatsappFormatPipe],
     template: `
     <div class="container mx-auto px-4 py-8">
 
@@ -83,7 +84,12 @@ import { DialogModule } from 'primeng/dialog';
 
                     <div class="mb-6">
                         <h2 class="font-bold mb-2 text-xs text-gray-400 uppercase tracking-widest">Descripción</h2>
-                        <p class="text-gray-600 leading-relaxed whitespace-pre-line">{{p.description || 'Sin descripción disponible.'}}</p>
+                        <p *ngIf="p.description; else sinDescripcion"
+                           class="text-gray-600 leading-relaxed whitespace-pre-line"
+                           [innerHTML]="p.description | whatsappFormat"></p>
+                        <ng-template #sinDescripcion>
+                            <p class="text-gray-400 leading-relaxed">Sin descripción disponible.</p>
+                        </ng-template>
                     </div>
 
                     <div class="flex items-center gap-2 mb-6 text-sm font-medium" [class.text-green-600]="hasStock" [class.text-gray-400]="!hasStock">
