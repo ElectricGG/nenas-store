@@ -1,5 +1,6 @@
 import { Injectable, signal, computed } from '@angular/core';
 import { Product } from './product.service';
+import { whatsappUrl } from '../config/contacto';
 
 export interface CartItem {
     product: Product;
@@ -39,19 +40,13 @@ export class CartService {
         });
         message += `\nTotal: S/. ${this.total().toFixed(2)}`;
 
-        const encodedMessage = encodeURIComponent(message);
-        const url = `https://wa.me/51923422425?text=${encodedMessage}`;
-
-        window.open(url, '_blank');
+        window.open(whatsappUrl(message), '_blank');
     }
 
     checkoutSingleItem(product: Product) {
         let message = `Hola, estoy interesado en comprar el siguiente producto en Nena's Store:\n`;
         message += `- ${product.name} - S/. ${product.price.toFixed(2)}`;
 
-        const encodedMessage = encodeURIComponent(message);
-        const url = `https://wa.me/51923422425?text=${encodedMessage}`;
-
-        window.open(url, '_blank');
+        window.open(whatsappUrl(message), '_blank');
     }
 }

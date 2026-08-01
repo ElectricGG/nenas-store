@@ -6,6 +6,7 @@ import { FormsModule } from '@angular/forms';
 import { SliderModule } from 'primeng/slider';
 import { CheckboxModule } from 'primeng/checkbox';
 import { searchProducts } from '../../core/utils/product-search';
+import { whatsappUrl } from '../../core/config/contacto';
 
 @Component({
     selector: 'app-catalog',
@@ -137,6 +138,20 @@ import { searchProducts } from '../../core/utils/product-search';
                     <p class="text-gray-500 text-lg font-medium">No se encontraron productos con estos filtros.</p>
                     <button class="mt-4 px-6 py-2 bg-white border border-gray-200 rounded-full text-palo-rosa font-bold shadow-sm hover:shadow hover:border-palo-rosa transition-all" (click)="resetFilters()">Limpiar Filtros</button>
                 </div>
+
+                <!-- Lista de novedades: la unica forma que tenemos de que alguien vuelva -->
+                <div class="mt-12 rounded-3xl bg-[#fdf2f4] border border-pink-50 px-6 sm:px-10 py-10 text-center">
+                    <i class="pi pi-whatsapp text-4xl text-green-600 mb-4 block"></i>
+                    <h3 class="text-xl sm:text-2xl font-bold text-gray-800 font-serif mb-2">¿Te aviso cuando llegue algo nuevo?</h3>
+                    <p class="text-gray-600 text-sm max-w-md mx-auto mb-6">
+                        Subimos productos nuevos cada semana. Escríbenos y te sumamos a la lista de novedades por WhatsApp.
+                    </p>
+                    <a [href]="novedadesUrl" target="_blank" rel="noopener"
+                       class="inline-flex items-center gap-2 px-6 py-3 rounded-xl bg-green-500 text-white font-bold shadow-md hover:bg-green-600 hover:shadow-lg transition-all">
+                        <i class="pi pi-whatsapp"></i>
+                        Avísame de las novedades
+                    </a>
+                </div>
             </main>
         </div>
     </div>
@@ -153,6 +168,9 @@ export class CatalogComponent {
     searchTerm = '';
 
     showFiltersMobile = true;
+
+    // Mensaje listo para que la clienta solo tenga que enviarlo
+    novedadesUrl = whatsappUrl('¡Hola! Quiero que me avisen cuando lleguen productos nuevos a Nena\'s Store 💕');
 
     // Computed helpers for available options
     categories = computed(() => [...new Set(this.products().map(p => p.category))]);
