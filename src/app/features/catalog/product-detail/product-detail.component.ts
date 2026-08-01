@@ -17,11 +17,21 @@ import { WhatsappFormatPipe } from '../../../shared/pipes/whatsapp-format.pipe';
     template: `
     <div class="container mx-auto px-4 py-8">
 
-        <!-- Back link -->
-        <a routerLink="/" class="inline-flex items-center gap-2 text-sm font-bold text-gray-500 hover:text-palo-rosa transition-colors mb-6 group">
-            <i class="pi pi-arrow-left text-xs group-hover:-translate-x-1 transition-transform"></i>
-            Volver al catálogo
-        </a>
+        <!-- Back link + compartir -->
+        <div class="flex items-center justify-between gap-4 mb-6">
+            <a routerLink="/" class="inline-flex items-center gap-2 text-sm font-bold text-gray-500 hover:text-palo-rosa transition-colors group">
+                <i class="pi pi-arrow-left text-xs group-hover:-translate-x-1 transition-transform"></i>
+                Volver al catálogo
+            </a>
+
+            <button *ngIf="product()" (click)="compartir()"
+                    class="inline-flex items-center gap-2 text-sm font-bold px-3 py-2 rounded-full border border-gray-200 bg-white text-gray-600 hover:border-palo-rosa hover:text-palo-rosa shadow-sm transition-all shrink-0"
+                    [class.!border-green-200]="copiado"
+                    [class.!text-green-600]="copiado">
+                <i class="pi text-xs" [class.pi-share-alt]="!copiado" [class.pi-check]="copiado"></i>
+                {{ copiado ? 'Link copiado' : 'Compartir' }}
+            </button>
+        </div>
 
         <!-- Loading -->
         <div *ngIf="loading()" class="flex flex-col items-center justify-center py-32">
@@ -205,6 +215,7 @@ export class ProductDetailComponent {
     canScrollNext = false;
 
     isAdding = false;
+    copiado = false;
     displayPreview = false;
     isZoomed = false;
     zoomOrigin = '50% 50%';
@@ -313,6 +324,28 @@ export class ProductDetailComponent {
 
         this.analyticsService.logPurchaseClick(p);
         this.cartService.checkoutSingleItem(p);
+    }
+
+    // En celular abre el menu nativo (WhatsApp, Instagram...); en escritorio copia el link
+    async compartir() {
+        const p = this.product();
+        if (!p) return;
+
+        const url = window.location.href;
+        const texto = `${p.name} — S/. ${p.price.toFixed(2)} en Nena's Store`;
+
+        try {
+            if (navigator.share) {
+                await navigator.share({ title: p.name, text: texto, url });
+                return;
+            }
+
+            await navigator.clipboard.writeText(url);
+            this.copiado = true;
+            setTimeout(() => this.copiado = false, 2000);
+        } catch {
+            // Cancelar el dialogo de compartir no es un error
+        }
     }
 
     showPreview() {

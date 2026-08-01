@@ -74,13 +74,38 @@ import { searchProducts } from '../../core/utils/product-search';
             <!-- Grid -->
             <main class="flex-1 min-w-0">
                 <!-- Hero Section -->
-                <div class="mb-10 rounded-3xl bg-[#fdf2f4] overflow-hidden relative min-h-[200px] flex items-center px-8 sm:px-12 border border-pink-50 shadow-[0_0_20px_rgba(0,0,0,0.1)]">
-                    <div class="relative z-10 max-w-lg py-8">
-                        <span class="inline-block py-1 px-3 rounded-full bg-white text-palo-rosa text-xs font-bold tracking-wider mb-4 shadow-sm">NUEVA COLECCIÓN</span>
-                        <h1 class="text-4xl sm:text-5xl font-extrabold text-gray-900 mb-4 font-serif leading-tight">
-                            Estilo que <span class="text-transparent bg-clip-text bg-gradient-to-r from-palo-rosa to-pink-400">Enamora</span>
+                <div class="mb-10 rounded-3xl bg-[#fdf2f4] overflow-hidden relative flex items-center px-6 sm:px-12 border border-pink-50 shadow-[0_0_20px_rgba(0,0,0,0.1)]">
+                    <div class="relative z-10 max-w-2xl py-8">
+                        <span class="inline-block py-1 px-3 rounded-full bg-white text-palo-rosa text-xs font-bold tracking-wider mb-4 shadow-sm">NUEVOS INGRESOS CADA SEMANA</span>
+                        <h1 class="text-3xl sm:text-5xl font-extrabold text-gray-900 mb-3 font-serif leading-tight">
+                            Skincare, maquillaje y <span class="text-transparent bg-clip-text bg-gradient-to-r from-palo-rosa to-pink-400">accesorios</span>
                         </h1>
-                        <p class="text-gray-600 text-lg">Encuentra tu look perfecto para cada ocasión.</p>
+                        <p class="text-gray-600 text-base sm:text-lg mb-1">
+                            Kiss Beauty · Kevin &amp; Coco · Revel · Jarusa · Bioaqua y más.
+                        </p>
+                        <p class="text-gray-500 text-sm">
+                            {{products().length}} productos disponibles. Coordina tu pedido por WhatsApp.
+                        </p>
+
+                        <!-- Atajos: dan una decision en la primera pantalla, en vez de 78 productos sueltos -->
+                        <div class="flex flex-wrap gap-2 mt-6">
+                            <button *ngFor="let cat of categories()"
+                                    (click)="showOnlyCategory(cat)"
+                                    class="px-4 py-2 rounded-full text-sm font-bold shadow-sm transition-all border"
+                                    [class.bg-palo-rosa]="isOnlyCategory(cat)"
+                                    [class.text-white]="isOnlyCategory(cat)"
+                                    [class.border-palo-rosa]="isOnlyCategory(cat)"
+                                    [class.bg-white]="!isOnlyCategory(cat)"
+                                    [class.text-gray-700]="!isOnlyCategory(cat)"
+                                    [class.border-transparent]="!isOnlyCategory(cat)"
+                                    [class.hover:border-palo-rosa]="!isOnlyCategory(cat)">
+                                {{cat}}
+                            </button>
+                            <button *ngIf="hasActiveFilters()" (click)="resetFilters()"
+                                    class="px-4 py-2 rounded-full text-sm font-bold text-gray-500 hover:text-palo-rosa transition-colors">
+                                Ver todo
+                            </button>
+                        </div>
                     </div>
                     <!-- Decorative Elements -->
                     <div class="absolute right-0 top-0 h-full w-1/3 bg-gradient-to-l from-pink-100/50 to-transparent hidden sm:block"></div>
@@ -179,6 +204,16 @@ export class CatalogComponent {
     clearSearch() {
         this.searchTerm = '';
         this.triggerUpdate();
+    }
+
+    // Atajos del hero: tocar una categoria deja solo esa; tocarla de nuevo la quita
+    showOnlyCategory(category: string) {
+        this.selectedCategories = this.isOnlyCategory(category) ? [] : [category];
+        this.triggerUpdate();
+    }
+
+    isOnlyCategory(category: string): boolean {
+        return this.selectedCategories.length === 1 && this.selectedCategories[0] === category;
     }
 
     toggleFilters() {
