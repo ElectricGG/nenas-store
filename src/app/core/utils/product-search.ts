@@ -33,11 +33,6 @@ function matches(product: Product, terms: string[]): boolean {
 }
 
 function score(product: Product, terms: string[], query: string): number {
-    // El código exacto manda sobre todo lo demás: así se nombran los productos
-    // en el live ("este es el 34") y quien lo escribe espera caer justo ahí.
-    const codigo = String(product.codigo);
-    if (query === codigo || query === `#${codigo}`) return 1000;
-
     const name = normalizeText(product.name);
     const description = normalizeText(product.description);
 
@@ -62,6 +57,17 @@ export function searchProducts(products: Product[], query: string | null | undef
     const normalized = normalizeText(query);
     const terms = searchTerms(query);
     if (terms.length === 0) return products;
+
+    // Escribir solo un número es buscar un código. Así se nombran los productos
+    // en el live: quien escribe "2" quiere el #2, no los treinta que mencionan
+    // un 2 en su nombre o su descripción.
+    const soloNumero = /^#?\d+$/.test(normalized);
+    if (soloNumero) {
+        const codigo = Number(normalized.replace('#', ''));
+        const exacto = products.filter(product => product.codigo === codigo);
+        if (exacto.length > 0) return exacto;
+        // Si ningún producto tiene ese número, se sigue como búsqueda de texto
+    }
 
     return products
         .filter(product => matches(product, terms))
