@@ -86,7 +86,10 @@ import { WhatsappFormatPipe } from '../../../shared/pipes/whatsapp-format.pipe';
 
                 <!-- Info -->
                 <div class="flex flex-col">
-                    <span class="inline-block self-start py-1 px-3 rounded-full bg-[#fdf2f4] text-palo-rosa text-xs font-bold tracking-wider mb-3">{{p.category | uppercase}}</span>
+                    <div class="flex items-center gap-2 mb-3">
+                        <span class="inline-block py-1 px-3 rounded-full bg-[#fdf2f4] text-palo-rosa text-xs font-bold tracking-wider">{{p.category | uppercase}}</span>
+                        <span class="inline-block py-1 px-3 rounded-full bg-gray-100 text-gray-600 text-xs font-bold tracking-wider" title="Número del producto">#{{p.codigo}}</span>
+                    </div>
 
                     <h1 class="text-2xl sm:text-3xl font-extrabold text-gray-900 mb-2 font-serif leading-tight">{{p.name}}</h1>
 
@@ -332,7 +335,7 @@ export class ProductDetailComponent {
         if (!p) return;
 
         const url = window.location.href;
-        const texto = `${p.name} — S/. ${p.price.toFixed(2)} en Nena's Store`;
+        const texto = `#${p.codigo} ${p.name} — S/. ${p.price.toFixed(2)} en Nena's Store`;
 
         try {
             if (navigator.share) {

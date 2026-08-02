@@ -5,6 +5,7 @@ import { SupabaseService } from './supabase.service';
 // Read Models (UI)
 export interface Product {
     id: string; // Changed to string for UUID
+    codigo: number; // Número corto para nombrarlo en vivo: "este es el 34"
     name: string;
     price: number;
     image: string; // Primary image (backwards compatibility)
@@ -70,6 +71,7 @@ export class ProductService {
                 .from('products')
                 .select(`
                     id,
+                    codigo,
                     name,
                     description,
                     price,
@@ -118,6 +120,7 @@ export class ProductService {
             .from('products')
             .select(`
                 id,
+                codigo,
                 name,
                 description,
                 price,
@@ -370,6 +373,7 @@ export class ProductService {
 
         return {
             id: row.id,
+            codigo: row.codigo,
             name: row.name,
             price: row.price,
             image: row.image_url || (images.length > 0 ? images[0] : ''),

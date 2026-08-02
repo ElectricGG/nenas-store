@@ -36,7 +36,7 @@ export class CartService {
 
         let message = `Hola, estoy interesado en comprar los siguientes productos en Nena's Store:\n`;
         items.forEach(item => {
-            message += `- ${item.product.name} x${item.quantity} - S/. ${(item.product.price * item.quantity).toFixed(2)}\n`;
+            message += `- #${item.product.codigo} ${item.product.name} x${item.quantity} - S/. ${(item.product.price * item.quantity).toFixed(2)}\n`;
         });
         message += `\nTotal: S/. ${this.total().toFixed(2)}`;
 
@@ -45,7 +45,7 @@ export class CartService {
 
     checkoutSingleItem(product: Product) {
         let message = `Hola, estoy interesado en comprar el siguiente producto en Nena's Store:\n`;
-        message += `- ${product.name} - S/. ${product.price.toFixed(2)}`;
+        message += `- #${product.codigo} ${product.name} - S/. ${product.price.toFixed(2)}`;
 
         window.open(whatsappUrl(message), '_blank');
     }

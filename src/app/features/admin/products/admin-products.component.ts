@@ -43,7 +43,7 @@ import { ToastModule } from 'primeng/toast';
                 <input type="text"
                        [ngModel]="searchTerm()"
                        (ngModelChange)="searchTerm.set($event)"
-                       placeholder="Buscar por nombre o descripción..."
+                       placeholder="Buscar por número, nombre o descripción..."
                        class="w-full pl-11 pr-10 py-3 rounded-xl border border-gray-200 bg-white shadow-sm text-sm text-gray-700 placeholder-gray-400 focus:outline-none focus:border-palo-rosa transition-colors">
                 <button *ngIf="searchTerm()" (click)="searchTerm.set('')" aria-label="Limpiar búsqueda"
                         class="absolute right-3 top-1/2 -translate-y-1/2 w-6 h-6 rounded-full bg-gray-100 text-gray-500 flex items-center justify-center hover:bg-gray-200 transition-colors">
@@ -61,6 +61,7 @@ import { ToastModule } from 'primeng/toast';
                     <ng-template pTemplate="header">
                         <tr>
                             <th class="w-16">Imagen</th>
+                            <th class="w-20">Código</th>
                             <th>Nombre</th>
                             <th>Categoría</th>
                             <th>Precio</th>
@@ -72,6 +73,9 @@ import { ToastModule } from 'primeng/toast';
                         <tr>
                             <td>
                                 <img [src]="product.image" [alt]="product.name" class="w-12 h-12 rounded-lg object-cover shadow-sm bg-gray-50" />
+                            </td>
+                            <td>
+                                <span class="inline-block px-2 py-1 rounded-lg bg-gray-100 text-gray-700 text-sm font-bold">#{{ product.codigo }}</span>
                             </td>
                             <td class="font-medium text-gray-800">{{ product.name }}</td>
                             <td>
@@ -95,7 +99,7 @@ import { ToastModule } from 'primeng/toast';
                     </ng-template>
                     <ng-template pTemplate="emptymessage">
                         <tr>
-                            <td colspan="6" class="text-center py-8 text-gray-400">
+                            <td colspan="7" class="text-center py-8 text-gray-400">
                                 <ng-container *ngIf="searchTerm(); else sinProductos">
                                     Ningún producto coincide con "{{ searchTerm() }}".
                                     <button (click)="searchTerm.set('')" class="text-palo-rosa font-bold hover:underline ml-1">Limpiar</button>

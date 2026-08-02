@@ -18,6 +18,9 @@ import { Router } from '@angular/router';
       <div class="relative aspect-[3/4] rounded-lg overflow-hidden mb-3 bg-gray-50 cursor-pointer group/image" (click)="goToDetail()" (touchstart)="onCarouselTouchStart($event)" (touchend)="onCarouselTouchEnd($event)">
         <img #productImage [src]="currentImage" class="w-full h-full object-cover transform group-hover:scale-105 transition-transform duration-700" alt="{{product.name}}" loading="lazy">
         <div class="absolute inset-0 bg-black/5 opacity-0 group-hover:opacity-100 transition-opacity"></div>
+
+        <!-- Numero para nombrarlo en el live -->
+        <span class="absolute top-1 left-1 z-10 bg-white/90 text-gray-700 text-[10px] font-bold px-1.5 py-0.5 rounded-md shadow-sm backdrop-blur-sm">#{{product.codigo}}</span>
         
         <!-- Navigation Arrows (always visible on mobile, hover on desktop) -->
         <ng-container *ngIf="product.images && product.images.length > 1">

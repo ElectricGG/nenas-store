@@ -119,7 +119,7 @@ import { whatsappUrl } from '../../core/config/contacto';
                         <input type="text"
                                [(ngModel)]="searchTerm"
                                (ngModelChange)="triggerUpdate()"
-                               placeholder="Buscar producto o marca..."
+                               placeholder="Buscar por número, nombre o marca..."
                                class="w-full pl-11 pr-10 py-3 rounded-2xl border border-pink-50 bg-white shadow-sm text-sm text-gray-700 placeholder-gray-400 focus:outline-none focus:border-palo-rosa transition-colors">
                         <button *ngIf="searchTerm" (click)="clearSearch()" aria-label="Limpiar búsqueda"
                                 class="absolute right-3 top-1/2 -translate-y-1/2 w-6 h-6 rounded-full bg-gray-100 text-gray-500 flex items-center justify-center hover:bg-gray-200 transition-colors">

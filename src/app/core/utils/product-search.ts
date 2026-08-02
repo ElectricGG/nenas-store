@@ -26,13 +26,18 @@ export function searchTerms(query: string | null | undefined): string[] {
     return normalizeText(query).split(/\s+/).filter(Boolean);
 }
 
-/** Cada palabra buscada debe aparecer en el nombre o en la descripción. */
+/** Cada palabra buscada debe aparecer en el código, el nombre o la descripción. */
 function matches(product: Product, terms: string[]): boolean {
-    const haystack = `${normalizeText(product.name)} ${normalizeText(product.description)}`;
+    const haystack = `#${product.codigo} ${normalizeText(product.name)} ${normalizeText(product.description)}`;
     return terms.every(term => haystack.includes(term));
 }
 
 function score(product: Product, terms: string[], query: string): number {
+    // El código exacto manda sobre todo lo demás: así se nombran los productos
+    // en el live ("este es el 34") y quien lo escribe espera caer justo ahí.
+    const codigo = String(product.codigo);
+    if (query === codigo || query === `#${codigo}`) return 1000;
+
     const name = normalizeText(product.name);
     const description = normalizeText(product.description);
 
